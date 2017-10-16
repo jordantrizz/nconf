@@ -336,7 +336,7 @@ function history_add($action, $name, $value, $fk_id_item = 'NULL', $feature = ''
 # reloads the db connection and selects the db
 # (must be user after auth by sql)
 function relaod_nconf_db_connection(){
-    $dbh = mysql_connect(DBHOST,DBUSER,DBPASS);
+    $dbh = mysql_connecti(DBHOST,DBUSER,DBPASS);
     mysql_select_db(DBNAME);
 }
 
@@ -987,12 +987,12 @@ function get_linked_data($id){
     $old_linked_data = array();
 
     $result_old_linked_data = db_templates("get_linked_data", $id);
-    while($entry2 = mysql_fetch_assoc($result_old_linked_data)){
+    while($entry2 = mysqli_fetch_assoc($result_old_linked_data)){
         $old_linked_data[$entry2["id_attr"]][] = $entry2["fk_item_linked2"];
     }
 
     $result_old_linked_data_childs = db_templates("get_linked_data_childs", $id);
-    while($entry3 = mysql_fetch_assoc($result_old_linked_data_childs)){
+    while($entry3 = mysqli_fetch_assoc($result_old_linked_data_childs)){
         $old_linked_data[$entry3["id_attr"]][] = $entry3["fk_id_item"];
     }
 
@@ -1013,7 +1013,10 @@ function db_handler($query, $output = "result", $debug_title = "query"){
     if ( (DB_NO_WRITES == 1) AND ( !preg_match("/^SELECT/i", $query) ) ){
         message ('INFO', "DB_NO_WRITES activated, no deletions or modifications will be performed");
     }else{
-        $result = mysql_query($query);
+        $dbh = mysqli_connect(DBHOST,DBUSER,DBPASS);
+        mysqli_select_db($dbh,DBNAME);
+        
+        $result = mysqli_query($dbh,$query);
         // new DEBUG output
         $debug_query        = NConf_HTML::text_converter("sql_uppercase", $query);
         $debug_query_output = NConf_HTML::swap_content($debug_query, 'Query', FALSE, FALSE);
@@ -1045,7 +1048,7 @@ function db_handler($query, $output = "result", $debug_title = "query"){
 
                     break;
                 case "getOne":
-                    $first_row = mysql_fetch_row($result);
+                    $first_row = mysqli_fetch_row($result);
                     $return = $first_row[0];
                     # DEBUG output with new API module:
                     $debug_data_result  = NConf_HTML::text('<b>Result: getOne:</b>'.$return);
@@ -1071,14 +1074,14 @@ function db_handler($query, $output = "result", $debug_title = "query"){
                     break;
 
                 case "num_rows":
-                    $result = mysql_num_rows($result);
+                    $result = mysqli_num_rows($result);
                     $return = $result;
                     # DEBUG output with new API module:
                     $debug_data_result  = NConf_HTML::text('<b>Result: number of rows:</b>'.$return);
                     break;
             
                 case "assoc":
-                    $result = mysql_fetch_assoc($result);
+                    $result = mysqli_fetch_assoc($result);
                     $return = $result;
                     # DEBUG output with new API module:
                     $debug_data_result  = NConf_HTML::swap_content($return, 'Result: assoc array:', FALSE, TRUE);
@@ -1087,7 +1090,7 @@ function db_handler($query, $output = "result", $debug_title = "query"){
                 case "array":
                     $i = 0;
                     $rows = array();
-                    while ($row  = mysql_fetch_assoc($result) ){
+                    while ($row  = mysqli_fetch_assoc($result) ){
                         $rows[$i] = $row;
                         $i++;
                     }
@@ -1101,7 +1104,7 @@ function db_handler($query, $output = "result", $debug_title = "query"){
                 case "array_direct":
                     $i = 0;
                     $rows = array();
-                    while ($row  = mysql_fetch_row($result) ){
+                    while ($row  = mysqli_fetch_row($result) ){
                         $rows[$i] = $row[0];
                         $i++;
                     }
@@ -1113,7 +1116,7 @@ function db_handler($query, $output = "result", $debug_title = "query"){
 
                 case "array_2fieldsTOassoc":
                     $rows = array();
-                    while ($row  = mysql_fetch_row($result) ){
+                    while ($row  = mysqli_fetch_row($result) ){
                         $rows[$row[0]] = $row[1];
                     }
                     $count = count($rows);
@@ -1322,7 +1325,7 @@ function read_attributes($config_class, $visible = ''){
     }
     $result = db_handler($query, "result", $message);
     
-    while($entry = mysql_fetch_assoc($result)){
+    while($entry = mysqli_fetch_assoc($result)){
 
         if( ($entry["datatype"] == "text") OR ($entry["datatype"] == "select") ){
             // set value
@@ -1888,7 +1891,7 @@ function get_childs($id, $mode, $levels = 0){
     $result = db_handler($query, 'result', "get childs from $id");
 
 
-    while($entry = mysql_fetch_assoc($result)){
+    while($entry = mysqli_fetch_assoc($result)){
         /*
         #special for services
         if($entry["config_class"] == "service"){
@@ -2141,7 +2144,7 @@ function get_parents($id, &$flat = array(), $levels = 0){
             ORDER BY ConfigAttrs.friendly_name DESC,attr_value';
 
     $result = db_handler($sql, "result", "Recursive get parents");
-    while($entry = mysql_fetch_assoc($result)){
+    while($entry = mysqli_fetch_assoc($result)){
 
         #special for services
         /*

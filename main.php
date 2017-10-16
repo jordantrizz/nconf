@@ -35,8 +35,8 @@ require_once(NCONFDIR.'/config/mysql.php');
 #
 # mysql Initiate connection
 #
-$dbh = mysql_connect(DBHOST,DBUSER,DBPASS);
-mysql_select_db(DBNAME);
+$dbh = mysqli_connect(DBHOST,DBUSER,DBPASS);
+mysqli_select_db($dbh,DBNAME);
 
 #
 # some misc gui things
